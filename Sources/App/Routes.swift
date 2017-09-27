@@ -4,22 +4,22 @@ import PubNub
 
 var client: PubNub!
 
-
-
 let configuration = PNConfiguration(publishKey: "pub-c-b6db3020-95a8-4c60-8d16-13345aaf8709", subscribeKey: "sub-c-05dce56c-3c2e-11e7-847e-02ee2ddab7fe")
 
 
 func set()
 {
+    configuration.stripMobilePayload = false
     client = PubNub.clientWithConfiguration(configuration)
     //client.addListener(self as! PNObjectEventListener)
     client.subscribeToChannels(["hello_world"], withPresence: true)
+    
     
 }
 
 func publish(message: String)
 {
-    client.publish("Hello", toChannel: "hello_world", withCompletion: nil)
+    client.publish(message, toChannel: "hello_world", withCompletion: nil)
 }
 
 
@@ -53,7 +53,16 @@ extension Droplet {
         get("pubnub") { req in
             set()
             publish(message: "Hello")
-            return "hello"
+            return "Hello"
+        }
+        
+        get("publish",":message") { request in
+            if let message = request.parameters["message"]?.string {
+                set()
+                publish(message: message)
+                return "Published \(message)!"
+            }
+            return "Error retrieving parameters."
         }
 
         get("plaintext") { req in
